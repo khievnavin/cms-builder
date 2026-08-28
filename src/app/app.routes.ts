@@ -19,6 +19,23 @@ export const routes: Routes = [
       ),
   },
   {
+    // Website CMS — list, edit, and publish full-page content
+    path: 'pages',
+    loadComponent: () =>
+      import('./pages-list/pages-list.component').then((m) => m.PagesListComponent),
+  },
+  {
+    path: 'pages/:id',
+    loadComponent: () =>
+      import('./page-builder/page-builder.component').then((m) => m.PageBuilderComponent),
+  },
+  {
+    // Public: the live website page, no auth guard
+    path: 'site/:slug',
+    loadComponent: () =>
+      import('./site-page/site-page.component').then((m) => m.SitePageComponent),
+  },
+  {
     // Public: this is the shareable client-facing link, no auth guard
     path: 'forms/:id',
     loadComponent: () => import('./form-fill/form-fill.component').then((m) => m.FormFillComponent),

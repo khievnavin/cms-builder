@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../shared/api.service';
 import { Template } from '../shared/schema.types';
@@ -8,13 +7,14 @@ import { Template } from '../shared/schema.types';
 @Component({
   selector: 'app-templates-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, RouterModule],
   template: `
     <div class="wrap">
-      <h2>Templates</h2>
-      <div class="new">
-        <input [(ngModel)]="newName" placeholder="New template name" />
-        <button (click)="create()" [disabled]="!newName.trim()">Create</button>
+      <div class="header">
+        <h2>Templates</h2>
+        <a routerLink="/pages" class="alt">Website pages →</a>
+        <span class="spacer"></span>
+        <button (click)="create()">+ New template</button>
       </div>
       <table *ngIf="templates.length" class="templates">
         <thead>
@@ -35,6 +35,7 @@ import { Template } from '../shared/schema.types';
             <td>{{ t.createdBy }}</td>
             <td>{{ t.updatedAt | date: 'medium' }}</td>
             <td class="actions">
+              <a [routerLink]="['/builder', t.id]">Edit</a>
               <a [routerLink]="['/templates', t.id, 'submissions']">View submissions</a>
             </td>
           </tr>
@@ -44,9 +45,12 @@ import { Template } from '../shared/schema.types';
     </div>
   `,
   styles: [`
-    .wrap { max-width: 800px; margin: 40px auto; padding: 16px; }
-    .new { display: flex; gap: 8px; margin-bottom: 20px; }
-    .new input { flex: 1; padding: 6px; }
+    .wrap { width: 100%; box-sizing: border-box; margin: 0; padding: 40px; }
+    .header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .header h2 { margin: 0; }
+    .header .spacer { flex: 1; }
+    .header .alt { color: #4a7dff; text-decoration: none; font-size: 13px; }
+    .header .alt:hover { text-decoration: underline; }
 
     .templates {
       width: 100%;
@@ -85,7 +89,9 @@ import { Template } from '../shared/schema.types';
     }
     .status.published { background: #e6f4ea; color: #1e7e34; }
 
-    .actions a { color: #4a7dff; text-decoration: none; font-size: 13px; white-space: nowrap; }
+    .actions { white-space: nowrap; }
+    .actions a { color: #4a7dff; text-decoration: none; font-size: 13px; margin-right: 14px; }
+    .actions a:last-child { margin-right: 0; }
     .actions a:hover { text-decoration: underline; }
 
     .empty { color: #999; text-align: center; margin-top: 24px; }
@@ -93,7 +99,6 @@ import { Template } from '../shared/schema.types';
 })
 export class TemplatesListComponent implements OnInit {
   templates: Template[] = [];
-  newName = '';
 
   constructor(private api: ApiService, private router: Router) {}
 
@@ -105,10 +110,11 @@ export class TemplatesListComponent implements OnInit {
     this.api.listTemplates().subscribe((t) => (this.templates = t));
   }
 
+  // No name prompt here — land in the builder and let the click-to-rename
+  // name field there handle it, opened automatically via the `new` query param.
   create(): void {
-    this.api.createTemplate(this.newName.trim()).subscribe((template) => {
-      this.newName = '';
-      this.router.navigate(['/builder', template.id]);
+    this.api.createTemplate('Untitled template').subscribe((template) => {
+      this.router.navigate(['/builder', template.id], { queryParams: { new: 'true' } });
     });
   }
 

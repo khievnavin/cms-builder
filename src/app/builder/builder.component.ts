@@ -88,6 +88,26 @@ const PALETTE: PaletteItem[] = [
             <input type="checkbox" [(ngModel)]="selected.validators!.required" (ngModelChange)="touch()" />
             Required
           </label>
+
+          <div class="options" *ngIf="selected.type === 'select' || selected.type === 'radio-group'">
+            <h4>Options</h4>
+            <div class="option-row" *ngFor="let opt of selected.options; let i = index">
+              <input
+                placeholder="Label"
+                [(ngModel)]="opt.label"
+                (ngModelChange)="onOptionLabelChange(opt)"
+              />
+              <input placeholder="Value" [(ngModel)]="opt.value" (ngModelChange)="touch()" />
+              <button
+                class="icon"
+                title="Remove option"
+                [disabled]="selected.options!.length <= 1"
+                (click)="removeOption(i)"
+              >&times;</button>
+            </div>
+            <button (click)="addOption()">Add option</button>
+          </div>
+
           <button (click)="removeSelected()">Remove field</button>
         </div>
       </div>
@@ -107,6 +127,11 @@ const PALETTE: PaletteItem[] = [
     .properties input[type=text], .properties input:not([type]), .properties select { width: 100%; padding: 4px; }
     .properties label.hint { color: #444; }
     .properties label.hint small { display: block; margin-top: 4px; color: #888; font-weight: 400; }
+    .options { margin-bottom: 12px; }
+    .options h4 { margin: 0 0 8px; }
+    .option-row { display: flex; gap: 6px; margin-bottom: 6px; }
+    .option-row input { flex: 1; min-width: 0; padding: 4px; }
+    .option-row .icon { flex: 0 0 auto; padding: 0 8px; }
     .link { margin-left: auto; }
   `],
 })
@@ -123,9 +148,11 @@ export class BuilderComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
+    const isNew = this.route.snapshot.queryParamMap.get('new') === 'true';
     this.api.getTemplate(id).subscribe((t) => {
       this.template = t;
       this.components = [...t.schema.components];
+      if (isNew) this.startEditName();
     });
   }
 
@@ -177,6 +204,31 @@ export class BuilderComponent implements OnInit {
 
   touch(): void {
     // property panel edits mutate `selected` directly (same object ref in components[])
+  }
+
+  private slugify(text: string): string {
+    return text.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  }
+
+  onOptionLabelChange(opt: { label: string; value: string }): void {
+    // Auto-fill the value from the label while the value is still blank;
+    // once the user types a value of their own we leave it alone.
+    if (!opt.value) opt.value = this.slugify(opt.label);
+    this.touch();
+  }
+
+  addOption(): void {
+    if (!this.selected) return;
+    const opts = (this.selected.options ??= []);
+    const n = opts.length + 1;
+    opts.push({ label: `Option ${n}`, value: `option_${n}` });
+    this.touch();
+  }
+
+  removeOption(index: number): void {
+    if (!this.selected?.options || this.selected.options.length <= 1) return;
+    this.selected.options.splice(index, 1);
+    this.touch();
   }
 
   removeSelected(): void {

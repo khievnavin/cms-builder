@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { FormInstance, Submission, Template, TemplateSchema } from './schema.types';
+import {
+  FormInstance,
+  Page,
+  PageContent,
+  PageStyleConfig,
+  PublishedPage,
+  Submission,
+  Template,
+  TemplateSchema,
+} from './schema.types';
 
 const API_BASE = 'http://localhost:3000';
 
@@ -61,5 +70,39 @@ export class ApiService {
     return this.http.get<Submission[]>(
       `${API_BASE}/form-instances/${formInstanceId}/submissions`,
     );
+  }
+
+  // Pages (website CMS — builder side)
+  listPages(): Observable<Page[]> {
+    return this.http.get<Page[]>(`${API_BASE}/pages`);
+  }
+
+  getPage(id: string): Observable<Page> {
+    return this.http.get<Page>(`${API_BASE}/pages/${id}`);
+  }
+
+  createPage(title: string): Observable<Page> {
+    return this.http.post<Page>(`${API_BASE}/pages`, { title });
+  }
+
+  updatePage(id: string, updates: { title?: string; slug?: string }): Observable<Page> {
+    return this.http.put<Page>(`${API_BASE}/pages/${id}`, updates);
+  }
+
+  savePageContent(
+    id: string,
+    content: PageContent,
+    pageStyle: PageStyleConfig,
+  ): Observable<Page> {
+    return this.http.put<Page>(`${API_BASE}/pages/${id}/content`, { content, pageStyle });
+  }
+
+  publishPage(id: string): Observable<PublishedPage> {
+    return this.http.post<PublishedPage>(`${API_BASE}/pages/${id}/publish`, {});
+  }
+
+  // Public: the live website
+  getLivePage(slug: string): Observable<PublishedPage> {
+    return this.http.get<PublishedPage>(`${API_BASE}/site/${slug}`);
   }
 }
