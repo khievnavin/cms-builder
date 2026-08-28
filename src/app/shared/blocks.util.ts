@@ -26,6 +26,29 @@ export function newBlock(type: BlockType): PageBlock {
       };
     case 'columns':
       return { ...base, columns: [[], []], style: { paddingY: 24, maxWidth: 980 } };
+    case 'navbar':
+      return {
+        ...base,
+        text: 'Brand',
+        sticky: false,
+        links: [
+          { label: 'Home', href: '#' },
+          { label: 'About', href: '#' },
+          { label: 'Contact', href: '#' },
+        ],
+        style: { paddingY: 16, paddingX: 24, maxWidth: null, background: '#ffffff' },
+      };
+    case 'menu':
+      return {
+        ...base,
+        vertical: false,
+        links: [
+          { label: 'Link one', href: '#' },
+          { label: 'Link two', href: '#' },
+          { label: 'Link three', href: '#' },
+        ],
+        style: { paddingY: 12, align: 'left' },
+      };
   }
 }
 

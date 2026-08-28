@@ -66,6 +66,8 @@ export class AddBlockMenuComponent {
 
   readonly types: { type: BlockType; label: string; icon: string }[] = [
     { type: 'section', label: 'Section', icon: '▭' },
+    { type: 'navbar', label: 'Navbar', icon: '☰' },
+    { type: 'menu', label: 'Menu', icon: '⋮' },
     { type: 'heading', label: 'Heading', icon: 'H' },
     { type: 'text', label: 'Text', icon: '¶' },
     { type: 'image', label: 'Image', icon: '▣' },

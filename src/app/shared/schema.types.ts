@@ -86,7 +86,15 @@ export type BlockType =
   | 'image'
   | 'button'
   | 'spacer'
-  | 'columns';  // 2 or 3 side-by-side columns, each holding child blocks
+  | 'columns'   // 2 or 3 side-by-side columns, each holding child blocks
+  | 'navbar'    // site header: brand label on the left, nav links on the right
+  | 'menu';     // standalone list of nav links (row or column), e.g. footer/sidebar
+
+/** A single navigation entry used by 'navbar' and 'menu' blocks. */
+export interface NavLink {
+  label: string;
+  href: string;
+}
 
 export interface BlockStyle {
   background?: string;
@@ -119,6 +127,12 @@ export interface PageBlock {
   children?: PageBlock[];
   /** columns: one child-block list per column (length 2 or 3). */
   columns?: PageBlock[][];
+  /** navbar / menu: the nav entries. navbar also uses `text` for the brand label. */
+  links?: NavLink[];
+  /** navbar: stick to the top of the viewport on scroll. */
+  sticky?: boolean;
+  /** menu: stack links vertically instead of in a row. */
+  vertical?: boolean;
   style?: BlockStyle;
 }
 

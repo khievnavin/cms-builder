@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { ApiService } from '../shared/api.service';
-import { Page, PageBlock } from '../shared/schema.types';
+import { NavLink, Page, PageBlock } from '../shared/schema.types';
 import { findBlock } from '../shared/blocks.util';
 import { PageRendererComponent } from '../page-renderer/page-renderer.component';
 
@@ -93,6 +93,28 @@ const FONT_CHOICES = [
               </select>
             </label>
 
+            <ng-container *ngIf="b.type === 'navbar' || b.type === 'menu'">
+              <label *ngIf="b.type === 'navbar'" class="check">
+                <input type="checkbox" [(ngModel)]="b.sticky" (ngModelChange)="markDirty()" />
+                Stick to top on scroll
+              </label>
+              <label *ngIf="b.type === 'menu'" class="check">
+                <input type="checkbox" [(ngModel)]="b.vertical" (ngModelChange)="markDirty()" />
+                Stack links vertically
+              </label>
+              <p class="tip" *ngIf="b.type === 'navbar'">Click the brand text on the canvas to rename it.</p>
+
+              <div class="links-head">
+                <span>Links</span>
+                <button class="clear" (click)="addLink(b)">+ add</button>
+              </div>
+              <div class="link-row" *ngFor="let l of b.links; let i = index">
+                <input [(ngModel)]="l.label" (ngModelChange)="markDirty()" placeholder="Label" />
+                <input [(ngModel)]="l.href" (ngModelChange)="markDirty()" placeholder="#" />
+                <button class="link-danger" (click)="removeLink(b, i)" title="Remove">✕</button>
+              </div>
+            </ng-container>
+
             <ng-container *ngIf="b.type === 'heading' || b.type === 'text'">
               <label>Font size (px)
                 <input type="number" min="8" [(ngModel)]="b.style!.fontSize" (ngModelChange)="markDirty()" />
@@ -143,10 +165,11 @@ const FONT_CHOICES = [
                      (change)="toggleFullBleed(b, $event)" />
               Full-bleed (ignore content width)
             </label>
-            <label *ngIf="b.style!.maxWidth !== null">Max content width (px)
-              <input type="number" min="200" [ngModel]="b.style!.maxWidth ?? page.pageStyle.contentWidth"
-                     (ngModelChange)="b.style!.maxWidth = +$event; markDirty()" />
-            </label>
+            <div class="width-readout" *ngIf="b.style!.maxWidth !== null">
+              <span>Max content width</span>
+              <strong>{{ b.style!.maxWidth ?? page.pageStyle.contentWidth }} px</strong>
+              <small>Drag the blue handles on the block's edges in the canvas to resize.</small>
+            </div>
           </ng-container>
 
           <ng-template #pageSettings>
@@ -236,12 +259,21 @@ const FONT_CHOICES = [
       border: 1px solid #d6dae1; background: #fff; border-radius: 6px; padding: 6px 8px;
       font-size: 11px; cursor: pointer; margin-bottom: 10px; color: #6b7482;
     }
+    .width-readout { margin-bottom: 10px; }
+    .width-readout span { color: #444; }
+    .width-readout strong { display: block; margin: 2px 0; font-size: 15px; color: #1f2430; }
+    .width-readout small { color: #8a929f; line-height: 1.4; display: block; }
     .check { display: flex; align-items: center; gap: 8px; }
     .check input { width: auto !important; margin: 0 !important; }
     .link-danger { border: 0; background: transparent; color: #c0392b; cursor: pointer; font-size: 12px; }
     .tip { color: #8a929f; margin: 0 0 14px; line-height: 1.5; }
     .relink { color: #4a7dff; cursor: pointer; margin-left: 4px; }
     .relink:hover { text-decoration: underline; }
+
+    .links-head { display: flex; align-items: center; justify-content: space-between; margin: 10px 0 6px; color: #444; }
+    .link-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .link-row input { margin-top: 0 !important; }
+    .link-row .link-danger { font-size: 13px; padding: 0 4px; }
   `],
 })
 export class PageBuilderComponent implements OnInit {
@@ -322,6 +354,17 @@ export class PageBuilderComponent implements OnInit {
     if (count > cols.length) while (cols.length < count) cols.push([]);
     else cols.length = count; // dropped columns' blocks are discarded
     block.columns = cols;
+    this.markDirty();
+  }
+
+  addLink(block: PageBlock): void {
+    const links: NavLink[] = block.links ?? (block.links = []);
+    links.push({ label: 'New link', href: '#' });
+    this.markDirty();
+  }
+
+  removeLink(block: PageBlock, index: number): void {
+    block.links?.splice(index, 1);
     this.markDirty();
   }
 
